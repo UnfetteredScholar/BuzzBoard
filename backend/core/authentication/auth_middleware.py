@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -97,3 +98,19 @@ def get_current_admin_user(user: User = Depends(get_current_user)):
         )
 
     return user
+
+
+class RoleBasedAccessControl:
+    """Defines role based access control"""
+
+    def __init__(self, roles: List[str]) -> None:
+        self.allowed_roles = roles
+
+    def __call__(
+        self, current_user: User = Depends(get_current_active_user)
+    ) -> None:
+        if current_user.role not in self.allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User role not permitted to perform this action",
+            )

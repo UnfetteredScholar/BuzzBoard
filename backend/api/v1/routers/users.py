@@ -1,6 +1,4 @@
-import json
-from logging import getLogger
-from typing import Dict, List, Union
+from typing import Dict
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -8,12 +6,10 @@ from fastapi.responses import JSONResponse
 from core.authentication.auth_middleware import (
     authenticate_user,
     get_current_active_user,
-    get_current_admin_user,
 )
 from core.authentication.hashing import get_hash
 from core.storage import storage
 from schemas.user import User, UserOut
-from services.mongo_storage import change_id_key
 
 router = APIRouter()
 
