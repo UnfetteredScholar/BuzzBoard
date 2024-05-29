@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from typing import Any, Dict
 
 import schemas.categories as s_categories
+import schemas.comments as s_comments
 import schemas.posts as s_posts
 import schemas.reactions as s_reactions
 import schemas.user as s_user
@@ -216,6 +217,29 @@ class MongoStorage:
         reaction["date_created"] = date
         reaction["date_modified"] = date
 
+        post = self.get_post_record({"_id": data.target_id})
+        comment = self.get_comment_record({"_id": data.target_id})
+
+        if not post and not comment:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Target does not exist",
+            )
+        elif post is not None:
+            if data.is_like:
+                update = {"likes": post.likes + 1}
+            else:
+                update = {"dislikes": post.dislikes + 1}
+            self.update_post_record(filter={"_id": post.id}, update=update)
+        elif comment is not None:
+            if data.is_like:
+                update = {"likes": comment.likes + 1}
+            else:
+                update = {"dislikes": comment.dislikes + 1}
+            self.update_comment_record(
+                filter={"_id": comment.id}, update=update
+            )
+
         id = str(reactions.insert_one(reaction).inserted_id)
 
         return id
@@ -255,7 +279,7 @@ class MongoStorage:
 
     def update_reaction_record(self, filter: Dict, update: Dict):
         """Updates a reaction record"""
-        self.verify_reaction_record(filter)
+        reaction = self.verify_reaction_record(filter)
 
         for key in ["_id", "user_id", "target_id"]:
             if key in update:
@@ -267,9 +291,75 @@ class MongoStorage:
 
         self.db["reactions"].update_one(filter, {"$set": update})
 
+        post = self.get_post_record({"_id": reaction.target_id})
+        comment = self.get_comment_record({"_id": reaction.target_id})
+
+        if not post and not comment:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Target does not exist",
+            )
+        elif post is not None:
+            if (
+                not reaction.is_like and update.get("is_like") is True
+            ):  # dislike -> like
+                update = {
+                    "likes": post.likes + 1,
+                    "dislikes": post.dislikes - 1,
+                }
+            elif (
+                reaction.is_like and update.get("is_like") is False
+            ):  # like -> dislike
+                update = {
+                    "likes": post.likes - 1,
+                    "dislikes": post.dislikes + 1,
+                }
+            self.update_post_record(filter={"_id": post.id}, update=update)
+        elif comment is not None:
+            if (
+                not reaction.is_like and update.get("is_like") is True
+            ):  # dislike -> like
+                update = {
+                    "likes": comment.likes + 1,
+                    "dislikes": comment.dislikes - 1,
+                }
+            elif (
+                reaction.is_like and update.get("is_like") is False
+            ):  # like -> dislike
+                update = {
+                    "likes": comment.likes - 1,
+                    "dislikes": comment.dislikes + 1,
+                }
+            self.update_comment_record(
+                filter={"_id": comment.id}, update=update
+            )
+
     def delete_reaction_record(self, filter: Dict):
         """Deletes a reaction record by the filter"""
-        self.verify_reaction_record(filter)
+        reaction = self.verify_reaction_record(filter)
+
+        post = self.get_post_record({"_id": reaction.target_id})
+        comment = self.get_comment_record({"_id": reaction.target_id})
+
+        if not post and not comment:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Target does not exist",
+            )
+        elif post is not None:
+            if reaction.is_like:
+                update = {"likes": post.likes - 1}
+            else:
+                update = {"dislikes": post.dislikes - 1}
+            self.update_post_record(filter={"_id": post.id}, update=update)
+        elif comment is not None:
+            if reaction.is_like:
+                update = {"likes": comment.likes - 1}
+            else:
+                update = {"dislikes": comment.dislikes - 1}
+            self.update_comment_record(
+                filter={"_id": comment.id}, update=update
+            )
 
         self.db["reactions"].delete_one(filter)
 
@@ -336,9 +426,6 @@ class MongoStorage:
             "_id",
             "user_id",
             "category_id",
-            "likes",
-            "dislikes",
-            "comments",
         ]:
             if key in update:
                 raise KeyError(f"Invalid Key. KEY {key} cannot be changed")
@@ -354,3 +441,91 @@ class MongoStorage:
         self.verify_post_record(filter)
 
         self.db["posts"].delete_one(filter)
+
+    # Comments
+    def create_comment_record(
+        self,
+        data: s_comments.CommentIn,
+        post_id: str,
+        user_id: str,
+    ) -> str:
+        """Creates a comment record"""
+
+        comments = self.db["comments"]
+
+        self.verify_post_record({"_id": post_id})
+
+        date = datetime.now(UTC)
+        comment = data.model_dump()
+        comment["user_id"] = user_id
+        comment["post_id"] = post_id
+        # comment["reply_to_id"] = reply_to_id
+        comment["likes"] = 0
+        comment["dislikes"] = 0
+        comment["date_created"] = date
+        comment["date_modified"] = date
+
+        id = str(comments.insert_one(comment).inserted_id)
+
+        return id
+
+    def get_comment_record(self, filter: Dict) -> s_comments.Comment:
+        """Gets a comment record using the filter"""
+
+        comments = self.db["comments"]
+
+        if "_id" in filter and type(filter["_id"]) is str:
+            filter["_id"] = ObjectId(filter["_id"])
+
+        comment = comments.find_one(filter)
+
+        if comment:
+            comment = change_id_key(
+                json.loads(json.dumps(comment, default=str))
+            )
+            comment = s_comments.Comment(**comment)
+
+        return comment
+
+    def verify_comment_record(self, filter: Dict) -> s_comments.Comment:
+        """
+        Checks if a comment record exists
+        in the db using the supplied keys
+        """
+        comment = self.get_comment_record(filter)
+
+        if comment is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Comment not found",
+            )
+
+        return comment
+
+    def update_comment_record(self, filter: Dict, update: Dict):
+        """Updates a comment record"""
+        self.verify_comment_record(filter)
+
+        for key in [
+            "_id",
+            "user_id",
+            "post_id",
+            "reply_to_id",
+        ]:
+            if key in update:
+                raise KeyError(f"Invalid Key. KEY {key} cannot be changed")
+
+        if "_id" in filter and type(filter["_id"]) is str:
+            filter["_id"] = ObjectId(filter["_id"])
+        update["date_modified"] = datetime.now(UTC)
+
+        self.db["comments"].update_one(filter, {"$set": update})
+
+    def delete_comment_record(self, filter: Dict):
+        """Deletes a comment record by the filter"""
+        # Don't Delete Comment Record due to replies
+        self.verify_comment_record(filter)
+        update = {"content": "REMOVED", "user_id": "REMOVED"}
+        self.update_comment_record(filter=filter, update=update)
+
+        # self.db["comments"].delete_one(filter)

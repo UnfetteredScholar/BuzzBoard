@@ -1,8 +1,17 @@
-from api.v1.routers import categories, login, posts, reactions, register, users
+from api.v1.routers import (
+    categories,
+    comments,
+    login,
+    posts,
+    reactions,
+    register,
+    users,
+)
+from bson.errors import InvalidId
 from core.config import settings
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title=settings.APP_NAME, version=settings.RELEASE_ID)
@@ -26,14 +35,24 @@ app.include_router(
     categories.router, prefix=settings.API_V1_STR, tags=["categories"]
 )
 
+app.include_router(posts.router, prefix=settings.API_V1_STR, tags=["posts"])
+
+app.include_router(
+    comments.router, prefix=settings.API_V1_STR, tags=["comments"]
+)
+
 app.include_router(
     reactions.router, prefix=settings.API_V1_STR, tags=["reactions"]
 )
-
-app.include_router(posts.router, prefix=settings.API_V1_STR, tags=["posts"])
 
 
 @app.get(path="/", include_in_schema=False)
 def redirect_docs() -> RedirectResponse:
     """Redirects / to API docs"""
     return RedirectResponse("/docs")
+
+
+@app.exception_handler(InvalidId)
+def invalid_id_handler(request, exc):
+    message = {"message": "Invalid Object Id"}
+    return JSONResponse(message, status.HTTP_400_BAD_REQUEST)
