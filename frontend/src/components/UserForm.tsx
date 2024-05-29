@@ -10,12 +10,13 @@ import { useForm } from 'react-hook-form';
 
 interface FieldValues {
 	email: string;
+	username: string;
 	password: string;
 }
 
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface UserFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-const UserAuthForm: FC<UserAuthFormProps> = ({ className, ...props }) => {
+const UserForm: FC<UserFormProps> = ({ className, ...props }) => {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { toast } = useToast();
 
@@ -33,6 +34,8 @@ const UserAuthForm: FC<UserAuthFormProps> = ({ className, ...props }) => {
 			console.log(
 				'Sign up with email:',
 				data.email,
+				'and username',
+				data.username,
 				'and password:',
 				data.password
 			);
@@ -71,7 +74,7 @@ const UserAuthForm: FC<UserAuthFormProps> = ({ className, ...props }) => {
 					<div className="mb-4">
 						<label
 							htmlFor="email"
-							className="block text-sm font-medium text-gray-700"
+							className="block text-left text-sm font-medium text-gray-700"
 						>
 							Email Address
 						</label>
@@ -90,8 +93,28 @@ const UserAuthForm: FC<UserAuthFormProps> = ({ className, ...props }) => {
 					</div>
 					<div className="mb-4">
 						<label
+							htmlFor="username"
+							className="block text-left text-sm font-medium text-gray-700"
+						>
+							Username
+						</label>
+						<input
+							type="username"
+							id="username"
+							{...register('username', { required: 'Username is required' })}
+							className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+							placeholder="Enter your username"
+						/>
+						{errors.username && (
+							<span className="text-red-500 text-sm">
+								{errors.username.message}
+							</span>
+						)}
+					</div>
+					<div className="mb-4">
+						<label
 							htmlFor="password"
-							className="block text-sm font-medium text-gray-700"
+							className="block text-left text-sm font-medium text-gray-700"
 						>
 							Password
 						</label>
@@ -114,7 +137,7 @@ const UserAuthForm: FC<UserAuthFormProps> = ({ className, ...props }) => {
 						size="sm"
 						className="w-full"
 					>
-						Sign In
+						Sign Up
 					</Button>
 				</form>
 
@@ -134,4 +157,4 @@ const UserAuthForm: FC<UserAuthFormProps> = ({ className, ...props }) => {
 	);
 };
 
-export default UserAuthForm;
+export default UserForm;
