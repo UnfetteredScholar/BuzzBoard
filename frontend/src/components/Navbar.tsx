@@ -3,6 +3,7 @@ import { Icons } from './Icons';
 import { buttonVariants } from './ui/Button';
 import { getAuthSession } from '@/lib/auth';
 import UserAccountNav from './UserAccountNav';
+import { User } from 'lucide-react';
 
 const Navbar = async () => {
 	const session = await getAuthSession();
@@ -21,7 +22,7 @@ const Navbar = async () => {
 				{/* Search bar */}
 
 				{session?.user ? (
-					<UserAccountNav />
+					<UserAccountNav user={session.user} />
 				) : (
 					<Link href="/sign-in" className={buttonVariants()}>
 						Sign In
