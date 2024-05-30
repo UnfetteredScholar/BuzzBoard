@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { signIn } from 'next-auth/react';
 import { Icons } from './Icons';
 import { useToast } from '@/hooks/use-toast';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
 interface FieldValues {
 	email: string;
@@ -26,24 +26,33 @@ const UserForm: FC<UserFormProps> = ({ className, ...props }) => {
 		formState: { errors },
 	} = useForm<FieldValues>();
 
-	const onSubmit = async (data: FieldValues) => {
+	const onSubmit: SubmitHandler<FieldValues> = async (data) => {
 		setIsLoading(true);
 
 		try {
-			// Replace with your actual sign up logic using data.email and data.password
-			console.log(
-				'Sign up with email:',
-				data.email,
-				'and username',
-				data.username,
-				'and password:',
-				data.password
-			);
-			// You can use next-auth/react for sign up if applicable
-			// await signUp('email', data);
+			const response = await fetch('/api/auth/signup', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.message || 'Something went wrong!');
+			}
+
+			toast({
+				title: 'Sign Up Successful',
+				description: 'You can now log in with your credentials',
+				// variant: 'success',
+			});
 		} catch (error) {
-			console.error('Error during sign up:', error);
-			// Handle sign up errors here (e.g., display toast notification)
+			toast({
+				title: 'Sign Up Failed',
+				description: (error as Error).message,
+				variant: 'destructive',
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -55,7 +64,6 @@ const UserForm: FC<UserFormProps> = ({ className, ...props }) => {
 		try {
 			await signIn('google');
 		} catch (error) {
-			//toast notification
 			toast({
 				title: 'Oops!',
 				description: 'Working on this feature. Come back later',
@@ -69,7 +77,6 @@ const UserForm: FC<UserFormProps> = ({ className, ...props }) => {
 	return (
 		<div className={cn('flex justify-center', className)} {...props}>
 			<div className="flex flex-col items-center">
-				{/* Sign up form */}
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="mb-4">
 						<label
@@ -99,7 +106,7 @@ const UserForm: FC<UserFormProps> = ({ className, ...props }) => {
 							Username
 						</label>
 						<input
-							type="username"
+							type="text"
 							id="username"
 							{...register('username', { required: 'Username is required' })}
 							className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
