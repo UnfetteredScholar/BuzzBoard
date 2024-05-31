@@ -65,6 +65,8 @@ class MongoStorage:
         user = form_data.model_dump()
         user["password"] = get_hash(form_data.password)
         user["status"] = s_user.UserStatus.UNVERIFIED
+        user["role"] = s_user.Role.USER
+        user["subscribed"] = []
         user["date_created"] = date
         user["date_modified"] = date
 

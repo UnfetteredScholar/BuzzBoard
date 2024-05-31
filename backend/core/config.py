@@ -3,7 +3,12 @@ import logging.handlers
 import os
 from typing import Any, List
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+
+os.makedirs("./media", exist_ok=True)
+
+load_dotenv()
 
 
 def configure_logging():
