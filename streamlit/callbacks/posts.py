@@ -5,7 +5,7 @@ import requests
 
 import streamlit as st
 
-BACKEND = os.environ.get("BACKEND")
+BACKEND = os.environ.get("BACKEND", "http://localhost:8000")
 
 
 def add_post(
@@ -38,6 +38,6 @@ def add_post(
         url=f"{BACKEND}/api/v1/posts", data=data, headers=headers, files=files
     )
 
-    st.write(response.content)
+    # st.write(response.content)
 
-    # st.switch_page(st.session_state.get("current_page", "index.py"))
+    st.switch_page(st.session_state.get("current_page", "index.py"))

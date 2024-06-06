@@ -4,7 +4,7 @@ import requests
 
 import streamlit as st
 
-BACKEND = os.environ.get("BACKEND")
+BACKEND = os.environ.get("BACKEND", "http://localhost:8000")
 
 
 def comment_on_post(post_id: str, comment: str, reply_to_id: str = None):

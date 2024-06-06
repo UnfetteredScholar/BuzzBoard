@@ -4,7 +4,7 @@ import requests
 
 import streamlit as st
 
-BACKEND = os.environ.get("BACKEND")
+BACKEND = os.environ.get("BACKEND", "http://localhost:8000")
 
 
 def register(username: str, email: str, password: str):
@@ -43,7 +43,7 @@ def verify_email(token: str) -> bool:
         return False
 
 
-def login(email: str, password: str):
+def login(email: str, password: str) -> bool:
     """performs user login"""
 
     body = {"username": email, "password": password}
@@ -55,8 +55,10 @@ def login(email: str, password: str):
 
     if response.ok:
         st.session_state["access_token"] = response.json().get("access_token")
+        return True
     else:
         st.warning("Invalid Email or Password")
+        return False
 
 
 def logout():

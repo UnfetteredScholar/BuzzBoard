@@ -1,6 +1,9 @@
-import streamlit as st
 from callbacks import categories, posts
+from st_pages import hide_pages
 
+import streamlit as st
+
+hide_pages(["verify_email"])
 st.header("New Post")
 
 if "post_categories" not in st.session_state:

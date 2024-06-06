@@ -2,14 +2,14 @@ import os
 from typing import Any, Dict, List
 
 import requests
+from callbacks.reaction import react_to_target
 from dotenv import load_dotenv
 
 import streamlit as st
-from callbacks.reaction import react_to_target
 
 load_dotenv()
 
-BACKEND = os.environ.get("BACKEND")
+BACKEND = os.environ.get("BACKEND", "http://localhost:8000")
 
 
 def write(text: str):
@@ -58,7 +58,7 @@ def display_post_comments(
     page_size: int = 10,
 ):
     params = {
-        "page": page,
+        "page_number": page,
         "page_size": page_size,
     }
     response = requests.get(

@@ -1,10 +1,11 @@
-from st_pages import add_page_title
-
-import streamlit as st
 from callbacks.comment import comment_on_post
 from elements.comments import display_post_comments
 from elements.posts import single_post
+from st_pages import add_page_title, hide_pages
 
+import streamlit as st
+
+hide_pages(["verify_email"])
 add_page_title()
 
 st.session_state["current_page"] = "./pages/display_post.py"

@@ -2,14 +2,14 @@ import os
 from typing import Any, Dict, List
 
 import requests
+from callbacks.reaction import react_to_target
 from dotenv import load_dotenv
 
 import streamlit as st
-from callbacks.reaction import react_to_target
 
 load_dotenv()
 
-BACKEND = os.environ.get("BACKEND")
+BACKEND = os.environ.get("BACKEND", "http://localhost:8000")
 
 
 def post_card(
@@ -77,7 +77,7 @@ def general_posts_feed(
     sort: str = "hot",
 ):
     params = {
-        "page": page,
+        "page_number": page,
         "page_size": page_size,
         "category_id": category,
         "category_topic": topic,

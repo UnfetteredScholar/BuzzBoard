@@ -2,7 +2,7 @@ import os
 
 import requests
 
-BACKEND = os.environ.get("BACKEND")
+BACKEND = os.environ.get("BACKEND", "http://localhost:8000")
 
 
 def get_categories(

@@ -4,7 +4,7 @@ import requests
 
 import streamlit as st
 
-BACKEND = os.environ.get("BACKEND")
+BACKEND = os.environ.get("BACKEND", "http://localhost:8000")
 
 
 def react_to_target(target_id: str, index: str):
