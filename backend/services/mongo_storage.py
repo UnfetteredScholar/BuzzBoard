@@ -455,7 +455,7 @@ class MongoStorage:
 
         comments = self.db["comments"]
 
-        self.verify_post_record({"_id": post_id})
+        post = self.verify_post_record({"_id": post_id})
 
         date = datetime.now(UTC)
         comment = data.model_dump()
@@ -468,6 +468,10 @@ class MongoStorage:
         comment["date_modified"] = date
 
         id = str(comments.insert_one(comment).inserted_id)
+
+        self.update_post_record(
+            {"_id": post_id}, update={"comments": post.comments + 1}
+        )
 
         return id
 
